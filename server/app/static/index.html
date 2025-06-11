@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Eye State Detector</title>
+  <style>
+    video, canvas {
+      display: block;
+      margin: 1rem auto;
+    }
+    #status {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <video id="video" width="320" height="240" autoplay muted></video>
+  <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+  <div id="status">Loading...</div>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const statusText = document.getElementById('status');
+
+    const socket = new WebSocket("ws://localhost:8000/ws/eye-state");
+
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      statusText.textContent = `closed_eye: ${data.eye_closed}`;
+      statusText.style.color = data.eye_closed ? 'red' : 'green';
+    };
+
+    socket.onopen = () => {
+      console.log("WebSocket connected");
+
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then((stream) => {
+          video.srcObject = stream;
+
+          // Send frame every 500ms
+          setInterval(() => {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const base64 = canvas.toDataURL("image/jpeg");
+            socket.send(base64);
+          }, 500);
+        })
+        .catch((err) => {
+          console.error("Camera error:", err);
+          statusText.textContent = "Camera access denied";
+        });
+    };
+
+    socket.onerror = (err) => {
+      console.error("WebSocket error:", err);
+      statusText.textContent = "WebSocket connection failed";
+    };
+  </script>
+</body>
+</html>

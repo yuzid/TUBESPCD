@@ -4,11 +4,13 @@ import Image from '../component/img';
 import background from '../assets/background.png';
 import toy1 from '../assets/toy1.png';
 import toy2 from '../assets/toy2.png';
+import EyeStateSocket from '../component/EyeStateSocket';
 
 function Game() {
 
   const [isShaking, setIsShaking] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [iseyeclosed, setEyeClosed] = useState(true);
 
   const toys = [
     { src: toy1, x: 100, y: 200 },
@@ -41,6 +43,8 @@ function Game() {
 
 
   return (
+    <>
+    <EyeStateSocket onEyeStateChange={setEyeClosed} />
     <div
       style={{
         backgroundImage: `url(${background})`,
@@ -76,7 +80,7 @@ function Game() {
         )
       ))}
     </div>
-  );
+  </>);
 }
 
 export default Game;

@@ -9,6 +9,8 @@ import jumpscare2 from '../assets/jumpscare2.png';
 import jumpscare3 from '../assets/jumpscare3.png';
 import shakingSound from '../assets/shaking.mp3';
 import jumpscareSound1 from '../assets/jumpscaresound1.mp3';
+import jumpscareSound2 from '../assets/jumpscaresound2.mp3';
+import jumpscareSound3 from '../assets/jumpscaresound3.mp3';
 import EyeStateSender from '../component/EyeStateSocket';
 
 function Game() {
@@ -27,7 +29,7 @@ function Game() {
   ];
 
   const jumpscareImages = [jumpscare1, jumpscare2, jumpscare3];
-  const jumpscareSounds = [jumpscareSound1]; // Tambahkan lebih banyak jika ada
+  const jumpscareSounds = [jumpscareSound1, jumpscareSound2, jumpscareSound3];
 
   const shakingCycleTimeout = useRef(null);
 
@@ -44,9 +46,9 @@ function Game() {
       setEyeSafeDuringShake(true);
 
       shakingCycleTimeout.current = setTimeout(() => {
+        setShakingToyIndex(null)
         if (eyeSafeDuringShake) {
-          setShakingToyIndex(null);
-          startShakingCycle(); // next cycle
+          startShakingCycle();
         }
       }, 5000);
     }, delay);
@@ -102,7 +104,7 @@ function Game() {
             setShakingToyIndex(null);
           }, 2000);
         }
-      }, 1000); // delay 1 second
+      }, 1500);
     }
 
     return () => {
@@ -161,16 +163,7 @@ function Game() {
           <div>GAME OVER</div>
           <button
             onClick={() => {
-              setIsGameOver(false);
-              setJumpscareSrc(null);
-              setShakingToyIndex(null);
-              setEyeSafeDuringShake(true);
-
-              if (shakingCycleTimeout.current) {
-                clearTimeout(shakingCycleTimeout.current);
-              }
-
-              startShakingCycle();
+              window.location.reload();
             }}
             style={{
               marginTop: '20px',

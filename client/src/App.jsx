@@ -1,22 +1,15 @@
-import { useState } from 'react'
-import reactlogo from './assets/react.svg'
-import ShakingImage from './component/shakingimg'
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Game from './pages/game';
 
 function App() {
   return (
-    <>
-      <ShakingImage
-      src={reactlogo}
-      x={600}
-      y={300}
-      width={300}
-      height={300}
-      shakeStrength={15}      // Semakin besar, semakin liar
-      shakeInterval={200}    // Semakin kecil, semakin sering
-    />
-
-    </>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Game/>}/>
+        <Route path="/menu" element={<></>}/>
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;

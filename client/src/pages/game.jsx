@@ -5,7 +5,7 @@ import background from '../assets/background.png';
 import toy1 from '../assets/toy1.png';
 import toy2 from '../assets/toy2.png';
 import jumpscare3 from '../assets/jumpscare3.png';
-import EyeStateSocket from '../component/EyeStateSocket';
+import EyeStateSender from '../component/EyeStateSocket';
 
 function Game() {
   const [iseyeclosed, setEyeClosed] = useState(true);
@@ -45,6 +45,11 @@ function Game() {
     return () => clearTimeout(timeoutId);
   }, [toys.length]);
 
+    useEffect(() => {
+  console.log('Eye closed:', iseyeclosed);
+    }, [iseyeclosed]);
+
+
   useEffect(() => {
     if (shakingToyIndex !== null && iseyeclosed === false) {
       setEyeSafeDuringShake(false);
@@ -66,7 +71,7 @@ function Game() {
 
   return (
     <>
-      <EyeStateSocket onEyeStateChange={setEyeClosed} />
+      <EyeStateSender onEyeStateChange={setEyeClosed} />
 
       {/* Debug UI (opsional, hapus di production) */}
       {/* <div style={{ position: 'absolute', top: 10, left: 10, color: 'white', zIndex: 9999 }}>

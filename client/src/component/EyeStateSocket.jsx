@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-function EyeStateSender() {
+function EyeStateSender({ onEyeStateChange }) { 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [eyeClosed, setEyeClosed] = useState(null);
@@ -37,6 +37,11 @@ function EyeStateSender() {
         const data = JSON.parse(event.data);
         if (typeof data.eye_closed === 'boolean') {
           setEyeClosed(data.eye_closed);
+
+          // Kirim ke parent jika fungsi callback tersedia
+          if (onEyeStateChange) {
+            onEyeStateChange(data.eye_closed);
+          }
         }
       } catch (err) {
         console.error("Invalid data:", err);
@@ -48,29 +53,18 @@ function EyeStateSender() {
       if (interval) clearInterval(interval);
       socket.close();
     };
-  }, []);
+  }, [onEyeStateChange]);
 
   return (
     <div style={{ textAlign: 'center' }}>
-      <video
-        ref={videoRef}
-        width="320"
-        height="240"
-        autoPlay
-        muted
-        style={{ display: "none" }} // Tidak ditampilkan
-      />
-      <canvas
-        ref={canvasRef}
-        width="320"
-        height="240"
-        style={{ display: "none" }} // Tidak ditampilkan
-      />
+      <video ref={videoRef} width="320" height="240" autoPlay muted style={{ display: "none" }} />
+      <canvas ref={canvasRef} width="320" height="240" style={{ display: "none" }} />
       <div style={{ fontSize: '2rem', fontWeight: 'bold', color: eyeClosed ? 'red' : 'green' }}>
         {eyeClosed === null ? 'Waiting for detection...' : `eye_closed: ${eyeClosed}`}
       </div>
     </div>
   );
 }
+
 
 export default EyeStateSender;

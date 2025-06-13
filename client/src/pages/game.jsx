@@ -1,10 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ShakingImage from '../component/shakingimg';
 import Image from '../component/img';
 import background from '../assets/background.png';
 import toy1 from '../assets/toy1.png';
 import toy2 from '../assets/toy2.png';
+import jumpscare1 from '../assets/jumpscare1.png';
+import jumpscare2 from '../assets/jumpscare2.png';
 import jumpscare3 from '../assets/jumpscare3.png';
+import shakingSound from '../assets/shaking.mp3';
+import jumpscareSound1 from '../assets/jumpscaresound1.mp3';
 import EyeStateSender from '../component/EyeStateSocket';
 
 function Game() {
@@ -14,41 +18,40 @@ function Game() {
   const [jumpscareSrc, setJumpscareSrc] = useState(null);
   const [isGameOver, setIsGameOver] = useState(false);
 
+  const shakingAudioRef = useRef(new Audio(shakingSound));
+  const jumpscareAudioRef = useRef(null);
+
   const toys = [
     { src: toy1, x: 100, y: 200 },
     { src: toy2, x: 300, y: 400 }
   ];
 
+  const jumpscareImages = [jumpscare1, jumpscare2, jumpscare3];
+  const jumpscareSounds = [jumpscareSound1]; // Tambahkan lebih banyak jika ada
+
+  const shakingCycleTimeout = useRef(null);
+
+  const startShakingCycle = () => {
+    const delay = Math.floor(Math.random() * (30 - 10 + 1) + 10) * 1000;
+
+    shakingCycleTimeout.current = setTimeout(() => {
+      const randomIndex = Math.floor(Math.random() * toys.length);
+      setShakingToyIndex(randomIndex);
+      setEyeSafeDuringShake(true);
+
+      shakingCycleTimeout.current = setTimeout(() => {
+        if (eyeSafeDuringShake) {
+          setShakingToyIndex(null);
+          startShakingCycle(); // next cycle
+        }
+      }, 5000);
+    }, delay);
+  };
+
   useEffect(() => {
-    let timeoutId;
-
-    const startShakingCycle = () => {
-      const delay = Math.floor(Math.random() * (30 - 10 + 1) + 10) * 1000;
-
-      timeoutId = setTimeout(() => {
-        const randomIndex = Math.floor(Math.random() * toys.length);
-        setShakingToyIndex(randomIndex);
-        setEyeSafeDuringShake(true); // reset aman
-
-        timeoutId = setTimeout(() => {
-          if (eyeSafeDuringShake) {
-            setShakingToyIndex(null);
-            startShakingCycle(); // lanjut ke siklus baru
-          }
-          // Jika tidak aman, biarkan useEffect di bawah yang menangani
-        }, 5000);
-      }, delay);
-    };
-
     startShakingCycle();
-
-    return () => clearTimeout(timeoutId);
-  }, [toys.length]);
-
-    useEffect(() => {
-  console.log('Eye closed:', iseyeclosed);
-    }, [iseyeclosed]);
-
+    return () => clearTimeout(shakingCycleTimeout.current);
+  }, []);
 
   useEffect(() => {
     if (shakingToyIndex !== null && iseyeclosed === false) {
@@ -57,31 +60,68 @@ function Game() {
   }, [iseyeclosed, shakingToyIndex]);
 
   useEffect(() => {
-    if (!eyeSafeDuringShake && shakingToyIndex !== null && !jumpscareSrc && !isGameOver) {
-      const images = [jumpscare3];
-      const random = Math.floor(Math.random() * images.length);
-      setJumpscareSrc(images[random]);
-
-      setTimeout(() => {
-        setIsGameOver(true);
-        setShakingToyIndex(null); // stop shaking
-      }, 2000);
+    // Audio control during shaking
+    const audio = shakingAudioRef.current;
+    if (shakingToyIndex !== null && !isGameOver) {
+      audio.loop = true;
+      audio.currentTime = 0;
+      audio.play().catch(err => console.warn('Shaking audio error:', err));
+    } else {
+      audio.pause();
+      audio.currentTime = 0;
     }
-  }, [eyeSafeDuringShake, shakingToyIndex, isGameOver, jumpscareSrc]);
+  }, [shakingToyIndex, isGameOver]);
+
+  useEffect(() => {
+    let delayTimeout;
+
+    if (!eyeSafeDuringShake && shakingToyIndex !== null && !jumpscareSrc && !isGameOver) {
+      delayTimeout = setTimeout(() => {
+        if (!iseyeclosed && shakingToyIndex !== null) {
+          const rand = Math.floor(Math.random() * jumpscareImages.length);
+          const selectedImage = jumpscareImages[rand];
+          const selectedSound = jumpscareSounds[rand % jumpscareSounds.length];
+
+          setJumpscareSrc(selectedImage);
+
+          shakingAudioRef.current.pause();
+          shakingAudioRef.current.currentTime = 0;
+
+          const audio = new Audio(selectedSound);
+          jumpscareAudioRef.current = audio;
+          audio.play().catch(err => console.warn('Jumpscare audio error:', err));
+
+          setTimeout(() => {
+            audio.pause();
+            audio.currentTime = 0;
+            setIsGameOver(true);
+            setShakingToyIndex(null);
+          }, 2000);
+        }
+      }, 1000); // delay 1 second
+    }
+
+    return () => {
+      if (delayTimeout) clearTimeout(delayTimeout);
+    };
+  }, [eyeSafeDuringShake, shakingToyIndex, isGameOver, jumpscareSrc, iseyeclosed]);
+
+  useEffect(() => {
+    if (isGameOver) {
+      shakingAudioRef.current.pause();
+      shakingAudioRef.current.currentTime = 0;
+
+      if (jumpscareAudioRef.current) {
+        jumpscareAudioRef.current.pause();
+        jumpscareAudioRef.current.currentTime = 0;
+      }
+    }
+  }, [isGameOver]);
 
   return (
     <>
       <EyeStateSender onEyeStateChange={setEyeClosed} />
 
-      {/* Debug UI (opsional, hapus di production) */}
-      {/* <div style={{ position: 'absolute', top: 10, left: 10, color: 'white', zIndex: 9999 }}>
-        <p>eyeClosed: {iseyeclosed.toString()}</p>
-        <p>eyeSafeDuringShake: {eyeSafeDuringShake.toString()}</p>
-        <p>shakingToyIndex: {shakingToyIndex}</p>
-        <p>gameOver: {isGameOver.toString()}</p>
-      </div> */}
-
-      {/* Jumpscare Overlay */}
       {jumpscareSrc && !isGameOver && (
         <div style={{
           position: 'fixed',
@@ -98,7 +138,6 @@ function Game() {
         </div>
       )}
 
-      {/* Game Over Screen */}
       {isGameOver && (
         <div style={{
           position: 'fixed',
@@ -109,16 +148,37 @@ function Game() {
           color: 'white',
           zIndex: 10000,
           display: 'flex',
+          flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
           fontSize: '3rem',
           fontWeight: 'bold'
         }}>
-          GAME OVER
+          <div>GAME OVER</div>
+          <button
+            onClick={() => {
+              setIsGameOver(false);
+              setJumpscareSrc(null);
+              setShakingToyIndex(null);
+              setEyeSafeDuringShake(true);
+              startShakingCycle();
+            }}
+            style={{
+              marginTop: '20px',
+              padding: '10px 20px',
+              fontSize: '1.2rem',
+              cursor: 'pointer',
+              backgroundColor: '#fff',
+              color: '#000',
+              border: 'none',
+              borderRadius: '8px'
+            }}
+          >
+            Try Again
+          </button>
         </div>
       )}
 
-      {/* Game Field */}
       <div
         style={{
           backgroundImage: `url(${background})`,

@@ -32,21 +32,25 @@ function Game() {
   const shakingCycleTimeout = useRef(null);
 
   const startShakingCycle = () => {
-    const delay = Math.floor(Math.random() * (30 - 10 + 1) + 10) * 1000;
+  if (shakingCycleTimeout.current) {
+    clearTimeout(shakingCycleTimeout.current);
+  }
+
+  const delay = Math.floor(Math.random() * (30 - 10 + 1) + 10) * 1000;
+
+  shakingCycleTimeout.current = setTimeout(() => {
+    const randomIndex = Math.floor(Math.random() * toys.length);
+    setShakingToyIndex(randomIndex);
+    setEyeSafeDuringShake(true);
 
     shakingCycleTimeout.current = setTimeout(() => {
-      const randomIndex = Math.floor(Math.random() * toys.length);
-      setShakingToyIndex(randomIndex);
-      setEyeSafeDuringShake(true);
-
-      shakingCycleTimeout.current = setTimeout(() => {
-        if (eyeSafeDuringShake) {
-          setShakingToyIndex(null);
-          startShakingCycle(); // next cycle
-        }
-      }, 5000);
-    }, delay);
-  };
+      if (eyeSafeDuringShake) {
+        setShakingToyIndex(null);
+        startShakingCycle(); // next cycle
+      }
+    }, 5000);
+  }, delay);
+};
 
   useEffect(() => {
     startShakingCycle();
@@ -161,6 +165,11 @@ function Game() {
               setJumpscareSrc(null);
               setShakingToyIndex(null);
               setEyeSafeDuringShake(true);
+
+              if (shakingCycleTimeout.current) {
+                clearTimeout(shakingCycleTimeout.current);
+              }
+
               startShakingCycle();
             }}
             style={{

@@ -32,25 +32,25 @@ function Game() {
   const shakingCycleTimeout = useRef(null);
 
   const startShakingCycle = () => {
-  if (shakingCycleTimeout.current) {
-    clearTimeout(shakingCycleTimeout.current);
-  }
+    if (shakingCycleTimeout.current) {
+      clearTimeout(shakingCycleTimeout.current);
+    }
 
-  const delay = Math.floor(Math.random() * (30 - 10 + 1) + 10) * 1000;
-
-  shakingCycleTimeout.current = setTimeout(() => {
-    const randomIndex = Math.floor(Math.random() * toys.length);
-    setShakingToyIndex(randomIndex);
-    setEyeSafeDuringShake(true);
+    const delay = Math.floor(Math.random() * (30 - 10 + 1) + 10) * 1000;
 
     shakingCycleTimeout.current = setTimeout(() => {
-      if (eyeSafeDuringShake) {
-        setShakingToyIndex(null);
-        startShakingCycle(); // next cycle
-      }
-    }, 5000);
-  }, delay);
-};
+      const randomIndex = Math.floor(Math.random() * toys.length);
+      setShakingToyIndex(randomIndex);
+      setEyeSafeDuringShake(true);
+
+      shakingCycleTimeout.current = setTimeout(() => {
+        if (eyeSafeDuringShake) {
+          setShakingToyIndex(null);
+          startShakingCycle(); // next cycle
+        }
+      }, 5000);
+    }, delay);
+  };
 
   useEffect(() => {
     startShakingCycle();

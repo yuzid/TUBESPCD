@@ -59,9 +59,6 @@ function EyeStateSender({ onEyeStateChange }) {
     <div style={{ textAlign: 'center' }}>
       <video ref={videoRef} width="320" height="240" autoPlay muted style={{ display: "none" }} />
       <canvas ref={canvasRef} width="320" height="240" style={{ display: "none" }} />
-      <div style={{ fontSize: '2rem', fontWeight: 'bold', color: eyeClosed ? 'red' : 'green' }}>
-        {eyeClosed === null ? 'Waiting for detection...' : `eye_closed: ${eyeClosed}`}
-      </div>
     </div>
   );
 }

@@ -35,11 +35,11 @@ function Game() {
   const sleepAudioRef = useRef(new Audio(sleepSound));
 
   const toys = [
-    { src: toy1, topPercent: 70, leftPercent: 20, width: 200, height: 200 },
-    { src: toy2, topPercent: 65, leftPercent: 35, width: 250, height: 250 },
-    { src: toy3, topPercent: 72, leftPercent: 50, width: 200, height: 200 },
-    { src: toy4, topPercent: 70, leftPercent: 65, width: 200, height: 200 },
-    { src: toy5, topPercent: 72, leftPercent: 80, width: 200, height: 200 }
+    { src: toy1, topPercent: 85, leftPercent: 20, width: 200, height: 200 },
+    { src: toy2, topPercent: 85, leftPercent: 35, width: 250, height: 250 },
+    { src: toy3, topPercent: 85, leftPercent: 50, width: 200, height: 200 },
+    { src: toy4, topPercent: 90, leftPercent: 65, width: 200, height: 200 },
+    { src: toy5, topPercent: 88, leftPercent: 80, width: 200, height: 200 }
   ];
 
   const jumpscareImages = [jumpscare1, jumpscare2, jumpscare3];

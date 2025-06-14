@@ -11,6 +11,8 @@ import shakingSound from '../assets/shaking.mp3';
 import jumpscareSound1 from '../assets/jumpscaresound1.mp3';
 import jumpscareSound2 from '../assets/jumpscaresound2.mp3';
 import jumpscareSound3 from '../assets/jumpscaresound3.mp3';
+import fanfare from '../assets/fanfare.mp3';
+import sleepSound from '../assets/sleep.mp3';
 import EyeStateSender from '../component/EyeStateSocket';
 
 function Game() {
@@ -19,9 +21,14 @@ function Game() {
   const [eyeSafeDuringShake, setEyeSafeDuringShake] = useState(true);
   const [jumpscareSrc, setJumpscareSrc] = useState(null);
   const [isGameOver, setIsGameOver] = useState(false);
+  const [isVictory, setIsVictory] = useState(false);
+  const [eyeClosedStartTime, setEyeClosedStartTime] = useState(null);
+  const [hasFallenAsleep, setHasFallenAsleep] = useState(false);
 
   const shakingAudioRef = useRef(new Audio(shakingSound));
   const jumpscareAudioRef = useRef(null);
+  const fanfareAudioRef = useRef(new Audio(fanfare));
+  const sleepAudioRef = useRef(new Audio(sleepSound));
 
   const toys = [
     { src: toy1, x: 100, y: 200 },
@@ -34,6 +41,8 @@ function Game() {
   const shakingCycleTimeout = useRef(null);
 
   const startShakingCycle = () => {
+    if (isGameOver || isVictory || hasFallenAsleep) return;
+
     if (shakingCycleTimeout.current) {
       clearTimeout(shakingCycleTimeout.current);
     }
@@ -41,13 +50,15 @@ function Game() {
     const delay = Math.floor(Math.random() * (30 - 10 + 1) + 10) * 1000;
 
     shakingCycleTimeout.current = setTimeout(() => {
+      if (isGameOver || isVictory || hasFallenAsleep) return;
+
       const randomIndex = Math.floor(Math.random() * toys.length);
       setShakingToyIndex(randomIndex);
       setEyeSafeDuringShake(true);
 
       shakingCycleTimeout.current = setTimeout(() => {
-        setShakingToyIndex(null)
-        if (eyeSafeDuringShake) {
+        setShakingToyIndex(null);
+        if (eyeSafeDuringShake && !isVictory && !hasFallenAsleep && !isGameOver) {
           startShakingCycle();
         }
       }, 5000);
@@ -60,15 +71,25 @@ function Game() {
   }, []);
 
   useEffect(() => {
-    if (shakingToyIndex !== null && iseyeclosed === false) {
+    const victoryTimer = setTimeout(() => {
+      if (!isGameOver) {
+        setIsVictory(true);
+        setShakingToyIndex(null);
+      }
+    }, 2 * 60 * 1000);
+
+    return () => clearTimeout(victoryTimer);
+  }, []);
+
+  useEffect(() => {
+    if (shakingToyIndex !== null && iseyeclosed === false && !isVictory) {
       setEyeSafeDuringShake(false);
     }
   }, [iseyeclosed, shakingToyIndex]);
 
   useEffect(() => {
-    // Audio control during shaking
     const audio = shakingAudioRef.current;
-    if (shakingToyIndex !== null && !isGameOver) {
+    if (shakingToyIndex !== null && !isGameOver && !isVictory && !hasFallenAsleep) {
       audio.loop = true;
       audio.currentTime = 0;
       audio.play().catch(err => console.warn('Shaking audio error:', err));
@@ -76,12 +97,12 @@ function Game() {
       audio.pause();
       audio.currentTime = 0;
     }
-  }, [shakingToyIndex, isGameOver]);
+  }, [shakingToyIndex, isGameOver, isVictory, hasFallenAsleep]);
 
   useEffect(() => {
     let delayTimeout;
 
-    if (!eyeSafeDuringShake && shakingToyIndex !== null && !jumpscareSrc && !isGameOver) {
+    if (!eyeSafeDuringShake && shakingToyIndex !== null && !jumpscareSrc && !isGameOver && !isVictory && !hasFallenAsleep) {
       delayTimeout = setTimeout(() => {
         if (!iseyeclosed && shakingToyIndex !== null) {
           const rand = Math.floor(Math.random() * jumpscareImages.length);
@@ -123,6 +144,80 @@ function Game() {
       }
     }
   }, [isGameOver]);
+
+  useEffect(() => {
+    const fanfareAudio = fanfareAudioRef.current;
+
+    if (isVictory) {
+      shakingAudioRef.current.pause();
+      shakingAudioRef.current.currentTime = 0;
+
+      if (jumpscareAudioRef.current) {
+        jumpscareAudioRef.current.pause();
+        jumpscareAudioRef.current.currentTime = 0;
+      }
+
+      fanfareAudio.currentTime = 0;
+      fanfareAudio.play().catch(err => console.warn('Fanfare audio error:', err));
+    } else {
+      fanfareAudio.pause();
+      fanfareAudio.currentTime = 0;
+    }
+  }, [isVictory]);
+
+  useEffect(() => {
+    let sleepTimer = null;
+
+    if (iseyeclosed && !eyeClosedStartTime && !isGameOver && !isVictory && !hasFallenAsleep) {
+      setEyeClosedStartTime(Date.now());
+    }
+
+    if (!iseyeclosed && eyeClosedStartTime) {
+      setEyeClosedStartTime(null);
+    }
+
+    if (eyeClosedStartTime) {
+      sleepTimer = setInterval(() => {
+        const elapsed = Date.now() - eyeClosedStartTime;
+        if (elapsed >= 30000 && !hasFallenAsleep) {
+          setHasFallenAsleep(true);
+          setShakingToyIndex(null);
+          setEyeClosedStartTime(null);
+        }
+      }, 1000);
+    }
+
+    return () => clearInterval(sleepTimer);
+  }, [iseyeclosed, eyeClosedStartTime, hasFallenAsleep, isGameOver, isVictory]);
+
+  useEffect(() => {
+    const sleepAudio = sleepAudioRef.current;
+
+    if (hasFallenAsleep) {
+      shakingAudioRef.current.pause();
+      shakingAudioRef.current.currentTime = 0;
+
+      if (jumpscareAudioRef.current) {
+        jumpscareAudioRef.current.pause();
+        jumpscareAudioRef.current.currentTime = 0;
+      }
+
+      sleepAudio.currentTime = 0;
+      sleepAudio.play().catch(err => console.warn('Sleep audio error:', err));
+    } else {
+      sleepAudio.pause();
+      sleepAudio.currentTime = 0;
+    }
+  }, [hasFallenAsleep]);
+
+  useEffect(() => {
+    if (isVictory || hasFallenAsleep) {
+      if (shakingCycleTimeout.current) {
+        clearTimeout(shakingCycleTimeout.current);
+      }
+      setShakingToyIndex(null);
+    }
+  }, [isVictory, hasFallenAsleep]);
 
   return (
     <>
@@ -181,6 +276,76 @@ function Game() {
         </div>
       )}
 
+      {isVictory && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'black',
+          color: 'white',
+          zIndex: 10000,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          fontSize: '3rem',
+          fontWeight: 'bold'
+        }}>
+          <div>YOU HAVE CONQUERED THE NIGHT</div>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              marginTop: '20px',
+              padding: '10px 20px',
+              fontSize: '1.2rem',
+              cursor: 'pointer',
+              backgroundColor: '#fff',
+              color: '#000',
+              border: 'none',
+              borderRadius: '8px'
+            }}
+          >
+            Play Again
+          </button>
+        </div>
+      )}
+
+      {hasFallenAsleep && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'black',
+          color: 'white',
+          zIndex: 10000,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          fontSize: '3rem',
+          fontWeight: 'bold'
+        }}>
+          <div>YOU ARE FALL ASLEEP LIKE A LOG</div>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              marginTop: '20px',
+              padding: '10px 20px',
+              fontSize: '1.2rem',
+              cursor: 'pointer',
+              backgroundColor: '#fff',
+              color: '#000',
+              border: 'none',
+              borderRadius: '8px'
+            }}
+          >
+            Wake Up and Try Again
+          </button>
+        </div>
+      )}
+
       <div
         style={{
           backgroundImage: `url(${background})`,
@@ -192,7 +357,7 @@ function Game() {
           overflow: 'hidden'
         }}
       >
-        {shakingToyIndex !== null && !isGameOver && (
+        {shakingToyIndex !== null && !isGameOver && !isVictory && (
           <div style={{
             position: 'absolute',
             top: '10%',

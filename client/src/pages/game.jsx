@@ -4,6 +4,9 @@ import Image from '../component/img';
 import background from '../assets/background.png';
 import toy1 from '../assets/toy1.png';
 import toy2 from '../assets/toy2.png';
+import toy3 from '../assets/toy3.png';
+import toy4 from '../assets/toy4.png';
+import toy5 from '../assets/toy5.png';
 import jumpscare1 from '../assets/jumpscare1.png';
 import jumpscare2 from '../assets/jumpscare2.png';
 import jumpscare3 from '../assets/jumpscare3.png';
@@ -27,12 +30,16 @@ function Game() {
 
   const shakingAudioRef = useRef(new Audio(shakingSound));
   const jumpscareAudioRef = useRef(null);
+  const victoryTimerRef = useRef(null);
   const fanfareAudioRef = useRef(new Audio(fanfare));
   const sleepAudioRef = useRef(new Audio(sleepSound));
 
   const toys = [
-    { src: toy1, x: 100, y: 200 },
-    { src: toy2, x: 300, y: 400 }
+    { src: toy1, x: 300, y: 800, width: 200, height: 200 },
+    { src: toy2, x: 600, y: 750, width: 250, height: 250 },
+    { src: toy3, x: 800, y: 800, width: 200, height: 200 },
+    { src: toy4, x: 1200, y: 800, width: 200, height: 200 },
+    { src: toy5, x: 1400, y: 800, width: 200, height: 200 }
   ];
 
   const jumpscareImages = [jumpscare1, jumpscare2, jumpscare3];
@@ -71,14 +78,14 @@ function Game() {
   }, []);
 
   useEffect(() => {
-    const victoryTimer = setTimeout(() => {
-      if (!isGameOver) {
+    victoryTimerRef.current = setTimeout(() => {
+      if (!isGameOver && !isVictory && !hasFallenAsleep) {
         setIsVictory(true);
         setShakingToyIndex(null);
       }
     }, 2 * 60 * 1000);
 
-    return () => clearTimeout(victoryTimer);
+    return () => clearTimeout(victoryTimerRef.current);
   }, []);
 
   useEffect(() => {
@@ -135,6 +142,7 @@ function Game() {
 
   useEffect(() => {
     if (isGameOver) {
+      // Stop all audio
       shakingAudioRef.current.pause();
       shakingAudioRef.current.currentTime = 0;
 
@@ -142,8 +150,23 @@ function Game() {
         jumpscareAudioRef.current.pause();
         jumpscareAudioRef.current.currentTime = 0;
       }
+
+      // Cancel victory timer
+      if (victoryTimerRef.current) {
+        clearTimeout(victoryTimerRef.current);
+        victoryTimerRef.current = null;
+      }
     }
   }, [isGameOver]);
+
+  useEffect(() => {
+    if (hasFallenAsleep) {
+      if (victoryTimerRef.current) {
+        clearTimeout(victoryTimerRef.current);
+        victoryTimerRef.current = null;
+      }
+    }
+  }, [hasFallenAsleep]);
 
   useEffect(() => {
     const fanfareAudio = fanfareAudioRef.current;
@@ -327,7 +350,7 @@ function Game() {
           fontSize: '3rem',
           fontWeight: 'bold'
         }}>
-          <div>YOU ARE FALL ASLEEP LIKE A LOG</div>
+          <div>YOU HAVE FALLEN ASLEEP LIKE A LOG</div>
           <button
             onClick={() => window.location.reload()}
             style={{
@@ -378,8 +401,8 @@ function Game() {
               src={toy.src}
               x={toy.x}
               y={toy.y}
-              width={300}
-              height={300}
+              width={toy.width}
+              height={toy.height}
               shakeStrength={15}
               shakeInterval={200}
             />
@@ -389,8 +412,8 @@ function Game() {
               src={toy.src}
               x={toy.x}
               y={toy.y}
-              width={300}
-              height={300}
+              width={toy.width}
+              height={toy.height}
             />
           )
         ))}

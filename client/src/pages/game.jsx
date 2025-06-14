@@ -192,6 +192,20 @@ function Game() {
           overflow: 'hidden'
         }}
       >
+        {shakingToyIndex !== null && !isGameOver && (
+          <div style={{
+            position: 'absolute',
+            top: '10%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            fontSize: '3rem',
+            fontWeight: 'bold',
+            color: 'red',
+            zIndex: 10,
+          }}>
+            CLOSE YOUR EYES
+          </div>
+        )}
         {toys.map((toy, index) => (
           shakingToyIndex === index ? (
             <ShakingImage

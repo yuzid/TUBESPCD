@@ -35,11 +35,11 @@ function Game() {
   const sleepAudioRef = useRef(new Audio(sleepSound));
 
   const toys = [
-    { src: toy1, x: 300, y: 800, width: 200, height: 200 },
-    { src: toy2, x: 600, y: 750, width: 250, height: 250 },
-    { src: toy3, x: 800, y: 800, width: 200, height: 200 },
-    { src: toy4, x: 1200, y: 800, width: 200, height: 200 },
-    { src: toy5, x: 1400, y: 800, width: 200, height: 200 }
+    { src: toy1, topPercent: 70, leftPercent: 20, width: 200, height: 200 },
+    { src: toy2, topPercent: 65, leftPercent: 35, width: 250, height: 250 },
+    { src: toy3, topPercent: 72, leftPercent: 50, width: 200, height: 200 },
+    { src: toy4, topPercent: 70, leftPercent: 65, width: 200, height: 200 },
+    { src: toy5, topPercent: 72, leftPercent: 80, width: 200, height: 200 }
   ];
 
   const jumpscareImages = [jumpscare1, jumpscare2, jumpscare3];
@@ -399,8 +399,8 @@ function Game() {
             <ShakingImage
               key={index}
               src={toy.src}
-              x={toy.x}
-              y={toy.y}
+              topPercent={toy.topPercent}
+              leftPercent={toy.leftPercent}
               width={toy.width}
               height={toy.height}
               shakeStrength={15}
@@ -410,8 +410,8 @@ function Game() {
             <Image
               key={index}
               src={toy.src}
-              x={toy.x}
-              y={toy.y}
+              topPercent={toy.topPercent}
+              leftPercent={toy.leftPercent}
               width={toy.width}
               height={toy.height}
             />
